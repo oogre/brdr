@@ -1,0 +1,255 @@
+<script type="text/javascript">
+	window.addEventListener("load", 
+		function documentLoaded (){
+
+			var implementSelector = function($elem, works, selectLastOne){
+
+				$elem.parent()
+				.add(	$elem.parent()
+						.nextAll("[id^=input]")
+				)
+				.toArray()
+				.map(function(selectorParent){
+					var first = 	$(selectorParent).find("option")
+									.first();
+
+					$(selectorParent).find("select")
+					.empty()
+					.append(first);
+				})
+
+				
+				works.map(function(work){
+					$elem.append("<option />")
+					.find("option").last()
+					.val(work.id)
+					.text(work.name)
+				});
+
+				var onChange = function(event){
+					var $target = $(event.target);
+					switch($target.attr("id")){
+						case "selectClient":
+							BRDR.call.getShops($target.val())
+							.done(function(shops){
+								implementSelector($("#selectShop"), shops);
+							});
+						break;
+						case "selectShop":
+							BRDR.call.getFrigoSystems($target.val())
+							.done(function(frigoSystems){
+								implementSelector($("#selectSystem"), frigoSystems);
+							});
+						break;
+						case "selectSystem":
+							BRDR.call.getFrigoGroups($target.val())
+							.done(function(frigoGroups){
+								implementSelector($("#selectGroup"), frigoGroups);
+							});
+						break;
+						case "selectGroup":
+							BRDR.call.getFrigoUnits($target.val())
+							.done(function(frigoUnits){
+								implementSelector($("#selectUnit"), frigoUnits);
+							});
+						break;
+					}
+				}
+
+				$elem.on("change", onChange);
+
+				if(selectLastOne){
+					$elem.find("option")
+					.removeAttr("selected")
+					.last()
+					.attr("selected", "selected");
+					onChange({
+						target : $elem
+					});
+				}
+				return $elem;
+			};
+
+			var editSelector = function(event){
+				var $elem = $(this).parent().parent().find("select");
+				var $parent = $elem.parent();
+				var old_select = $elem.replaceWith("<input required />");
+				var old_label = $(this).text();
+				
+
+				$elem = $parent.find("input")
+				.attr("id", $elem.attr("id"))
+				.attr("name", $elem.attr("name"))
+				.addClass("form-control")
+				.focus();
+				
+				$(this)
+				.text("Enregistrer")
+				.removeClass("btn-info").addClass("btn-success")
+				.one("click", function(){
+					var $this = $(this);
+
+					var _error = function(flag){
+						$this
+						.text("error")
+						.removeClass("btn-success")
+						.addClass("btn-danger");
+						setTimeout( _reset, 500);
+					}
+
+					var _reset = function(flag){
+						$this
+						.text(old_label)
+						.addClass("btn-info")
+						.removeClass("btn-danger")
+						.removeClass("btn-success")
+						.one("click", event.data, editSelector)
+						.next()
+						.remove();
+					}
+
+					if(	$elem.val() && 
+						jQuery.isFunction(event.data.saver) && 
+						(	$parent.attr("id") == "inputClient" || 
+								(	$parent.attr("id") != "inputClient" && 
+									$parent.prev().find("select").val()
+								)
+							)
+						) {
+						var req = {};
+						req[$elem.attr("name")] = $elem.val();
+						req.owner = $parent.prev().find("select").val();
+						event.data.saver(req)
+						.done(function(data){
+							$elem.replaceWith(old_select);
+							implementSelector(old_select, data, true);
+							_reset();
+						})
+						.fail(function(){
+							_error();
+						});
+					}else{
+						$elem.replaceWith(old_select);
+						_reset();
+					}
+					
+				})
+				.after($(this).clone())
+				.next()
+				.removeClass("btn-success")
+				.addClass("btn-danger")
+				.text("Annuler")
+				.on("click", function(){
+					$elem.replaceWith(old_select);
+					$(this)
+					.prev()
+					.text(old_label)
+					.addClass("btn-info")
+					.removeClass("btn-success")
+					.one("click", event.data, editSelector)
+					.next()
+					.remove();
+				});
+				return false;
+			}
+
+			BRDR.call.getClients()
+			.done(function(clients){
+				implementSelector($("#selectClient"), clients)
+			});
+
+			$("#newClient").one("click", {saver : BRDR.call.newClient}, editSelector);
+			$("#newShop").one("click", {saver : BRDR.call.newShop}, editSelector);
+			$("#newSystem").one("click", {saver : BRDR.call.newFrigoSystem}, editSelector);
+			$("#newGroup").one("click", {saver : BRDR.call.newFrigoGroup}, editSelector);
+			$("#newUnit").one("click", {saver : BRDR.call.newFrigoUnit}, editSelector);
+		}
+	);
+
+</script>
+
+<form action="/works/create" method="POST" class="form-signin" id="signup-form">
+	<h2 class="form-signin-heading">Créé un nouveau travail</h2>
+	<% 
+		if(flash && flash.err){
+			var errorName = flash.err.error;
+			var errorData = flash.err.data || false;
+			%>
+				<div class="alert alert-danger">
+					<div class="row">
+						<div class="col-sm-2">
+							<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+						</div>
+						<div class="col-sm-10">
+							 <%= __(errorName) %>
+						</div>
+					</div>
+				</div>
+			<% 	
+		}
+	%>
+	<hr/>
+
+
+	<div class="input-group col-sm-5" id="inputClient">
+        <select id="selectClient" name="name" class="form-control" required>
+            <option selected value="">Selectionnez un client</option>
+        </select>
+        <span class="input-group-btn"	>
+            <button class="btn btn-info" type="button" id="newClient">
+                Nouveau client
+            </button>
+        </span>
+    </div>
+
+    <div class="input-group col-sm-5" id="inputShop">
+        <select id="selectShop" name="name" class="form-control">
+            <option selected value="">Selectionnez un magasin</option>
+        </select>
+        <span class="input-group-btn">
+            <button class="btn btn-info" type="button" id="newShop">
+                Nouveau magasin
+            </button>
+        </span>
+    </div>
+
+    <div class="input-group col-sm-5" id="inputSystem">
+        <select id="selectSystem" name="name" class="form-control">
+            <option selected value="">Selectionnez un système</option>
+        </select>
+        <span class="input-group-btn">
+            <button class="btn btn-info" type="button" id="newSystem">
+                Nouveau Système
+            </button>
+        </span>
+    </div>
+
+    <div class="input-group col-sm-5" id="inputGroup">
+        <select id="selectGroup" name="name" class="form-control">
+            <option selected value="">Selectionnez un groupe</option>
+        </select>
+        <span class="input-group-btn">
+            <button class="btn btn-info" type="button" id="newGroup">
+                Nouveau groupe
+            </button>
+        </span>
+    </div>
+
+    <div class="input-group col-sm-5" id="inputUnit">
+        <select id="selectUnit" name="name" class="form-control">
+            <option selected value="">Selectionnez une unité</option>
+        </select>
+        <span class="input-group-btn">
+            <button class="btn btn-info" type="button" id="newUnit">
+                Nouvelle unité
+            </button>
+        </span>
+    </div>
+
+    
+    <button class="btn btn-success" type="button" id="create">
+        Créé une fiche de travail
+    </button>
+
+	<input type="hidden" name="_csrf" value="<%= _csrf %>" />
+</form>
