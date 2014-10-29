@@ -34,7 +34,7 @@ module.exports = {
 		},
 		note : {
 			type : 'string',
-			maxLength : 1024,
+			maxLength : 4096,
 		},
 		date_todo : {
 			type: 'datetime',
