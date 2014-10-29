@@ -28,7 +28,9 @@ module.exports = {
 
 
 	"new" : function(req, res, next){
-		return res.view();
+		return res.view({
+			title : "Creéé un nouveau travail"
+		});
 	},
 
 	"create" : function(req, res, next){
