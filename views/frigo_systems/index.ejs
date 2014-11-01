@@ -1,0 +1,27 @@
+<div id="systemList" class="table-list table-responsive">
+	<div class="hide hidden-new-form"><%- partial('create_simple.ejs') %></div>
+</div>
+
+<script type="text/javascript">
+	
+	var  documentLoaded = function (){
+		$("#systemList").append(JST["assets/templates/itemList.ejs"]({
+			h3 : "Liste de système frigorique",
+			table_name : "frigo_systems",
+			parentSelector : "systemList",
+			items : JSON.parse('<%- JSON.stringify(systems) %>'),
+			buttons : {
+				new : {
+					label : "Nouveau système frigorique",
+					onsuccess : "newFrigoSystem"
+				}
+			},
+			getter : "getFrigoGroups"
+ 		}))
+	};
+
+	window.addEventListener("load", documentLoaded);
+	<% if(false === res.locals.layout){ %>
+		documentLoaded();
+	<% } %>
+</script>

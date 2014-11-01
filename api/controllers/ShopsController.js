@@ -17,32 +17,27 @@
 
 module.exports = {
     
-	index : function(req, res, next){
-		if(req.param("id")){
-			Shops.find({owner : req.param("id")}, function foundShopBelogingToClientId(err, shops){
-				if(err){ 
-					return res.json({
-						success : false,
-						message : err
-					});
-				}
-				else if(!shops){
-					return res.json({
-						success : false,
-						message : "no_shop"
-					});
-				}
-				return res.json({
-					success : true,
-					data : shops
-				});
-			});	
+
+	"index" : function(req, res, next){
+		if(req.param("ajax")){
+			res.locals.layout = false;
 		}
-		else{
-			Shops.find(function foundShops(err, shops){
-				return res.json({
-					success : true,
-					data : shops || []
+		if(!req.param("id")){
+			Shops.find()
+			.sort({ name: 'asc' })
+			.exec(function foundShops(err, shops){
+				if(err) return res.send(400);
+				return res.view({
+					shops : shops,
+				});
+			});
+		}else{
+			Shops.find({owner : req.param("id")})
+			.sort({ name: 'asc' })
+			.exec(function foundShops(err, shops){
+				if(err) return res.send(400);
+				return res.view({
+					shops : shops,
 				});
 			});
 		}
@@ -50,21 +45,23 @@ module.exports = {
 
 	"create" : function(req, res, next){
 		if(!req.param("owner")){
-			return res.json({
-				success : false,
-				message : "no_owner_id"
-			});
+			console.log("/shops/create : no_owner_id");
+			return res.send(400);
 		}
-		Shops.create(req.params.all())
+		if(req.param("ajax")){
+			res.locals.layout = false;
+		}
+		Shops.create({
+			name : req.param("name").toLowerCase(),
+			owner : req.param("owner")
+		})
 		.exec(
-			function createdShop(err){
-			if(err){ 
-				return res.json({
-					success : false,
-					message : err
-				})
-			}
-			return res.redirect("/shops/index/"+req.param("owner"));
+			function ShopCreated(err){
+			if(err){
+				console.log(err);
+				return res.send(400);	
+			} 
+			return res.redirect("/shops/index/"+ req.param("owner") + (res.locals.layout === false ? "?ajax=true" : ""));
 		});
 	},
 

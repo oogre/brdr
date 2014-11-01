@@ -1,0 +1,27 @@
+<div id="shopList" class="table-list table-responsive">
+	<div class="hide hidden-new-form"><%- partial('create_simple.ejs') %></div>
+</div>
+
+<script type="text/javascript">
+	
+	var  documentLoaded = function (){
+		$("#shopList").append(JST["assets/templates/itemList.ejs"]({
+			h3 : "Liste de magasin",
+			table_name : "shops",
+			parentSelector : "shopList",
+			items : JSON.parse('<%- JSON.stringify(shops) %>'),
+			buttons : {
+				new : {
+					label : "Nouveau magasin",
+					onsuccess : "newShop"
+				}
+			},
+			getter : "getFrigoSystems"
+ 		}))
+	};
+
+	window.addEventListener("load", documentLoaded);
+	<% if(false === res.locals.layout){ %>
+		documentLoaded();
+	<% } %>
+</script>

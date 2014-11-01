@@ -13,9 +13,9 @@
  */
 
 module.exports = function(grunt) {
-
 	var templateFilesToInject = [
-		'templates/**/*.html'
+		'templates/**/*.html',
+		'templates/**/*.ejs'
 	];
 
 	grunt.config.set('jst', {

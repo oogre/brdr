@@ -7,19 +7,14 @@
  */
 
 module.exports = {
+	schema:true,
 	attributes : {
 		name : {
 			type: 'string',
 			required: true,
-			unique: true,
 			maxLength: 16,
 			index : true,
 		},
-
-		works : {
-			collection:'works',
-			via: 'work_type'
-		}
 	}
 	/*
         type: 'string' || 'integer',

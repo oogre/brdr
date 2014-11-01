@@ -7,13 +7,12 @@
  */
 
 module.exports = {
+	schema:true,
 	attributes : {
 		name : {
 			type: 'string',
 			required: true,
-			unique: true,
-			maxLength: 128,
-			index : true,
+			maxLength: 128
 		},
 
 		frigo_system : {
@@ -23,6 +22,44 @@ module.exports = {
 		owner : {
 			model : 'clients',
 			required: true
+		},
+		contacts :{
+			type: 'array'
+		},
+		addres :{
+			type: 'string',
+			maxLength: 64,
+		},
+		zipcode :{
+			type: 'string',
+			maxLength: 16,
+		},
+		city :{
+			type: 'string',
+			maxLength: 32,
+		},
+		country :{
+			type: 'string',
+			maxLength: 32,
+		}
+	},
+	beforeCreate : function(values, next){
+		if(values.name){
+			Shops.find({
+				name : values.name,
+				owner : values.owner
+			 })
+			.exec(function foundItem(err, item){
+				if(err)return next(err);
+				if(item.length>0) return next({
+						err : ["shop already exist"]
+					});
+				return next();
+			});
+		}else{
+			return next({
+					err : ["shop name needed"]
+				});
 		}
 	}
 	/*

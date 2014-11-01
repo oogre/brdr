@@ -26,34 +26,26 @@ module.exports = {
    */
   _config: {},
 
-  index : function(req, res, next){
-		if(req.param("id")){
-			Frigo_units.find({
-				owner : req.param("id")
-			}, function foundUnitBelogingToSystelId(err, units){
-				if(err){ 
-					return res.json({
-						success : false,
-						message : err
-					});
-				}
-				else if(!units){
-					return res.json({
-						success : false,
-						message : "no_group"
-					});
-				}
-				return res.json({
-					success : true,
-					data : units
-				});
-			});	
+	"index" : function(req, res, next){
+		if(req.param("ajax")){
+			res.locals.layout = false;
 		}
-		else{
-			Frigo_groups.find(function foundShops(err, units){
-				return res.json({
-					success : true,
-					data : units || []
+		if(!req.param("id")){
+			Frigo_units.find()
+			.sort({ name: 'asc' })
+			.exec(function foundUnits(err, units){
+				if(err) return res.send(400);
+				return res.view({
+					units : units,
+				});
+			});
+		}else{
+			Frigo_units.find({owner : req.param("id")})
+			.sort({ name: 'asc' })
+			.exec(function foundUnits(err, units){
+				if(err) return res.send(400);
+				return res.view({
+					units : units,
 				});
 			});
 		}
@@ -61,21 +53,23 @@ module.exports = {
 
 	"create" : function(req, res, next){
 		if(!req.param("owner")){
-			return res.json({
-				success : false,
-				message : "no_owner_id"
-			});
+			console.log("/frigo_units/create : no_owner_id");
+			return res.send(400);
 		}
-		Frigo_units.create(req.params.all())
+		if(req.param("ajax")){
+			res.locals.layout = false;
+		}
+		Frigo_units.create({
+			name : req.param("name").toLowerCase(),
+			owner : req.param("owner")
+		})
 		.exec(
-			function createdShop(err){
-			if(err){ 
-				return res.json({
-					success : false,
-					message : err
-				})
-			}
-			return res.redirect("/frigo_units/index/"+req.param("owner"));
+			function UnitCreated(err){
+			if(err){
+				console.log(err);
+				return res.send(400);	
+			} 
+			return res.redirect("/frigo_units/index/"+ req.param("owner") + (res.locals.layout === false ? "?ajax=true" : ""));
 		});
 	},
 

@@ -27,25 +27,32 @@ module.exports = {
 	_config: {},
 
 	"index" : function(req, res, next){
-		Clients.find(function foundClients(err, clients){
-			return res.json({
-				success : true,
-				data : clients || []
+		if(req.param("ajax")){
+			res.locals.layout = false;
+		}
+		Clients.find()
+		.sort({ name: 'asc' })
+		.exec(function foundClients(err, clients){
+			return res.view({
+				clients : clients,
 			});
 		});
 	},
 
 	"create" : function(req, res, next){
-		Clients.create(req.params.all())
+		if(req.param("ajax")){
+			res.locals.layout = false;
+		}
+		Clients.create({
+			name : req.param("name").toLowerCase()
+		})
 		.exec(
 			function ClientCreated(err){
-			if(err){ 
-				return res.json({
-					success : false,
-					message : err
-				})
-			}
-			return res.redirect("/clients/index");
+			if(err){
+				console.log(err);
+				return res.send(400);	
+			} 
+			return res.redirect("/clients/index"+(req.param("ajax") ? "?ajax=true" : ""));
 		});
 	},
   

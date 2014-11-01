@@ -26,34 +26,26 @@ module.exports = {
    */
   _config: {},
 
-	index : function(req, res, next){
-		if(req.param("id")){
-			Frigo_groups.find({
-				owner : req.param("id")
-			}, function foundGroupBelogingToSystelId(err, groups){
-				if(err){ 
-					return res.json({
-						success : false,
-						message : err
-					});
-				}
-				else if(!groups){
-					return res.json({
-						success : false,
-						message : "no_group"
-					});
-				}
-				return res.json({
-					success : true,
-					data : groups
-				});
-			});	
+	"index" : function(req, res, next){
+		if(req.param("ajax")){
+			res.locals.layout = false;
 		}
-		else{
-			Frigo_groups.find(function foundShops(err, groups){
-				return res.json({
-					success : true,
-					data : groups || []
+		if(!req.param("id")){
+			Frigo_groups.find()
+			.sort({ name: 'asc' })
+			.exec(function foundGroups(err, groups){
+				if(err) return res.send(400);
+				return res.view({
+					groups : groups,
+				});
+			});
+		}else{
+			Frigo_groups.find({owner : req.param("id")})
+			.sort({ name: 'asc' })
+			.exec(function foundGroups(err, groups){
+				if(err) return res.send(400);
+				return res.view({
+					groups : groups,
 				});
 			});
 		}
@@ -61,21 +53,23 @@ module.exports = {
 
 	"create" : function(req, res, next){
 		if(!req.param("owner")){
-			return res.json({
-				success : false,
-				message : "no_owner_id"
-			});
+			console.log("/frigo_groups/create : no_owner_id");
+			return res.send(400);
 		}
-		Frigo_groups.create(req.params.all())
+		if(req.param("ajax")){
+			res.locals.layout = false;
+		}
+		Frigo_groups.create({
+			name : req.param("name").toLowerCase(),
+			owner : req.param("owner")
+		})
 		.exec(
-			function createdShop(err){
-			if(err){ 
-				return res.json({
-					success : false,
-					message : err
-				})
-			}
-			return res.redirect("/frigo_groups/index/"+req.param("owner"));
+			function GroupCreated(err){
+			if(err){
+				console.log(err);
+				return res.send(400);	
+			} 
+			return res.redirect("/frigo_groups/index/"+ req.param("owner") + (res.locals.layout === false ? "?ajax=true" : ""));
 		});
 	},
 

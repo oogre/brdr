@@ -1,0 +1,94 @@
+	<h3><%= h3 %></h3>
+
+	<button class="btn btn-info new" type="button" data-onsuccess="<%= buttons.new.onsuccess %>">
+		<%= buttons.new.label %>
+	</button>
+
+	<table class="table" data-db-table-name="<%= table_name %>" >
+		<thead>
+			<tr>
+				<th>Nom</th>
+				<th>Date de création</th>
+				<th>Action</th>
+			</tr>
+		</thead>
+		<tbody>
+		<% 
+			items.map(function(item){
+		%>
+			<tr data-db-row-name="id" data-db-row-value="<%= item.id %>">
+				<td data-db-row-name="name" data-db-row-value="<%= (item.name).replace(' ', '_').toLowerCase() %>"><%= (item.name) %></td>
+				<td data-db-row-name="createdAt">
+					<% var date = new Date(item.createdAt) %>
+					<%= date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear() %>
+				</td>
+				<td>
+					<button class="btn btn-default select" type="button">
+					    Selectionner <i class="fa fa-wrench"></i>
+					</button>
+					<%  if(typeof(getter) != "undefined"  && getter) { %>
+						<button class="btn btn-info next" type="button">
+							Explorer <i class="fa fa-caret-right"></i>
+						</button>
+					<% } %>
+				</td>
+			</tr>
+		<%	
+			}); 
+		%>
+		</tbody>
+	</table>
+
+	<script type="text/javascript">
+
+		var $reference = $("#<%= parentSelector %>");
+		$reference
+		.find("button.select")
+		.on("click", function(){
+			BRDR.tools.handlers.selectItem($(this).parent().parent());
+			if(BRDR.context && BRDR.context.name == "newWork"){
+				var owners = {};
+				$(".active[data-db-row-name='id']")
+				.toArray()
+				.map(function(elem){
+					owners[$(elem).parent().parent().attr("data-db-table-name")] = $(elem).attr("data-db-row-value");
+				});
+
+				BRDR.call.newWork(owners)
+				.done(function(data){
+					window.location = data.url;
+				})
+				.fail(function(data){
+					console.log(data);
+				});
+			}else if(BRDR.context && BRDR.context.name == "workList"){
+				window.location = "/works/show/"+$(this).parent().parent().attr("data-db-row-value");
+			}
+		});
+
+		$reference
+		.find("button.new")
+		.on("click", function(){
+			if(BRDR.context && BRDR.context.name == "newWork"){
+				BRDR.tools.handlers.createItemIntoPannel(this);
+			}else if(BRDR.context && BRDR.context.name == "workList"){
+				window.location = "/works/new";
+			}
+		});
+
+		$reference.find("tr[data-db-row-name='id'] button.next")
+		.on("click", function(){
+			var $elem = $(this).parent().parent()
+			BRDR.tools.handlers.selectItem($elem);
+
+			<%  if(typeof(getter) != "undefined" && getter) { %>
+				if(BRDR.context && BRDR.context.name == "newWork"){
+					BRDR.call["<%= getter %>"]($elem.attr("data-db-row-value"))
+					.done(function(html){
+						BRDR.context.action(html, $reference.parent());
+					});
+				}
+			<% } %>
+		});
+	
+</script>

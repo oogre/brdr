@@ -7,6 +7,7 @@
  */
 
 module.exports = {
+	schema:true,
 	attributes : {
 		client : {
 			model : 'clients',
@@ -25,8 +26,7 @@ module.exports = {
 			model : 'frigo_units',
 		},
 		work_type : {
-			model : 'work_types',
-			required : true,
+			model : 'work_types'
 		},
 		done : {
 			type: 'boolean',
@@ -37,8 +37,7 @@ module.exports = {
 			maxLength : 4096,
 		},
 		date_todo : {
-			type: 'datetime',
-			required : true,
+			type: 'datetime'
 		}
 	}
 	/*

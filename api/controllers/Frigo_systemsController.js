@@ -26,34 +26,26 @@ module.exports = {
    */
   _config: {},
 
-	index : function(req, res, next){
-		if(req.param("id")){
-			Frigo_systems.find({
-				owner : req.param("id")
-			}, function foundSystemBelogingToShopId(err, systems){
-				if(err){ 
-					return res.json({
-						success : false,
-						message : err
-					});
-				}
-				else if(!systems){
-					return res.json({
-						success : false,
-						message : "no_system"
-					});
-				}
-				return res.json({
-					success : true,
-					data : systems
-				});
-			});	
+	"index" : function(req, res, next){
+		if(req.param("ajax")){
+			res.locals.layout = false;
 		}
-		else{
-			Frigo_systems.find(function foundShops(err, systems){
-				return res.json({
-					success : true,
-					data : systems || []
+		if(!req.param("id")){
+			Frigo_systems.find()
+			.sort({ name: 'asc' })
+			.exec(function foundSystems(err, systems){
+				if(err) return res.send(400);
+				return res.view({
+					systems : systems,
+				});
+			});
+		}else{
+			Frigo_systems.find({owner : req.param("id")})
+			.sort({ name: 'asc' })
+			.exec(function foundSystems(err, systems){
+				if(err) return res.send(400);
+				return res.view({
+					systems : systems,
 				});
 			});
 		}
@@ -61,21 +53,23 @@ module.exports = {
 
 	"create" : function(req, res, next){
 		if(!req.param("owner")){
-			return res.json({
-				success : false,
-				message : "no_owner_id"
-			});
+			console.log("/frigo_systems/create : no_owner_id");
+			return res.send(400);
 		}
-		Frigo_systems.create(req.params.all())
+		if(req.param("ajax")){
+			res.locals.layout = false;
+		}
+		Frigo_systems.create({
+			name : req.param("name").toLowerCase(),
+			owner : req.param("owner")
+		})
 		.exec(
-			function createdShop(err){
-			if(err){ 
-				return res.json({
-					success : false,
-					message : err
-				})
-			}
-			return res.redirect("/frigo_systems/index/"+req.param("owner"));
+			function SystemCreated(err){
+			if(err){
+				console.log(err);
+				return res.send(400);	
+			} 
+			return res.redirect("/frigo_systems/index/"+ req.param("owner") + (res.locals.layout === false ? "?ajax=true" : ""));
 		});
 	},
 };

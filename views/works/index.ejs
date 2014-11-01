@@ -1,13 +1,39 @@
+<% 
+	var root  = "clientList"  
 
-<div class="col-xs-4">
-	<div>
-		<a href="/works/new" class="btn btn-success">Nouveau travail</a>
-	</div>
-	<ul>
-	</ul>
+	var conf = {
+			h3 : "Liste de travaux",
+			table_name : "works",
+			parentSelector : root,
+			items : works,
+			buttons : {
+				new : {
+					label : "Nouveau travail",
+					onsuccess : "newClient"
+				}
+			},
+			getter : false
+ 		};
+%>
+<div id="<%= root %>" class="table-list table-responsive">
 </div>
-<div class="col-xs-8">
-	<div>bonjour</div>
-</div>
 
+<script type="text/javascript">
 
+	var  documentLoaded = function (){
+		BRDR.context = {
+			name : "workList",
+			action : function(html, pannel){
+				alert("hello")
+			}
+		};
+
+		
+		$("#<%= root %>").append(JST["assets/templates/itemList.ejs"]( JSON.parse('<%- JSON.stringify( conf) %>') ))
+	};
+
+	window.addEventListener("load", documentLoaded);
+	<% if(false === res.locals.layout){ %>
+		documentLoaded();
+	<% } %>
+</script>
